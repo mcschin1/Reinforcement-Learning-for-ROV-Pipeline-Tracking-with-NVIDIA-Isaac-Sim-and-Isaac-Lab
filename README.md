@@ -5,6 +5,8 @@
 
 ![ROV Pipeline Dashboard, Control tab](rov_isaac_sim_Lshape.png)
 
+![ROV Pipeline Dashboard, Control tab](rov_isaac_lab_Lshape.png)
+
 This project integrates **NVIDIA Isaac Sim** and **Isaac Lab** with an **ROV reinforcement learning (RL) digital twin**. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications, and adds an LLM-based AI agent that supervises training and evaluation runs.
 
 The implementation is designed for GPU-accelerated simulation and training on NVIDIA hardware.
