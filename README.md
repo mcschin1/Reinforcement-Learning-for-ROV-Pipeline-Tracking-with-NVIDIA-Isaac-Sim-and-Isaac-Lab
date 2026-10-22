@@ -491,4 +491,4 @@ If you use this work, please cite the paper:
 
 Paper: <https://arxiv.org/html/2610.04949v1>  
 Video: <https://youtu.be/Gnxuk30e1Vw>
-  Url: <https://www.ncl.ac.uk/singapore/staff/profile/chengchin.html>
+Contact: <https://www.ncl.ac.uk/singapore/staff/profile/chengchin.html> or cheng.chin@newcastle.ac.uk
