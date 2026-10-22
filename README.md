@@ -267,6 +267,155 @@ The overall objective is to establish a GPU-accelerated digital twin framework f
 * Sim-to-real transfer
 * Intelligent subsea robotics
 
-The public version of this repository provides the **conceptual workflow and environment setup**, while the complete implementation remains restricted to the appropriate research and development environment.
 
-This version gives readers enough information to understand **what you have built and how the components interact**, while making it substantially harder to reproduce the complete system without your internal code, parameters and assets.
+=======================
+
+# rov_pipeline_v20
+
+ROV pipeline-tracking simulation, training and evaluation on **Isaac Lab** (GPU-resident PhysX),
+the step-3+ result of `V18_ISAAC_LAB_PLAN.md`'s migration off v19's numpy/RK4 proxy env. Eleven
+control methods share one environment and one action interface: 5 learned RL policies (PPO,
+TD3, DDPG, SAC, TRPO) and 6 classical/model-based controllers (PID, SMC, Fuzzy, Feedback
+Linearization, MPC, ANFIS).
+
+A separate project, `../rov_dashboard_v1`, provides a point-and-click web UI over everything in
+this README (plus live telemetry visualization and an optional LLM supervisor agent in
+`../rov_agent_v1`) — see `rov_dashboard_v1/README.md` if you'd rather not use the terminal.
+
+## Environment setup
+
+```bash
+source /home/mcschin1/env_isaaclab/bin/activate
+export LD_PRELOAD="$LD_PRELOAD:/lib/aarch64-linux-gnu/libgomp.so.1"
+cd /home/mcschin1/Downloads/IsaacLab
+```
+
+Every script below is then launched the same way:
+```bash
+./isaaclab.sh -p /home/mcschin1/Downloads/nvidia_rov/rov_pipeline_v20/<script>.py [args] --headless
+```
+Drop `--headless` (or pass `--viz kit` where the script supports it) to watch it in Isaac Sim's
+own Kit viewer instead.
+
+## The environment
+
+**`rov_pipeline_env_v20.py`** — `RovPipelineEnv`, a `DirectRLEnv` (GPU torch tensors, PhysX
+integration). Observation encoding, reward terms and termination conditions are a 1:1 port of
+v19's `PipelineTrackingEnv` — only the integration backend changed. `SCENE` (module-level dict)
+holds the pipeline centerline points and rock positions/radii; `env._last` (populated every step
+by `_get_dones()`) carries the full per-step state (`pos`, `roll/pitch/yaw`, `nu_lin`/`nu_ang`,
+`s` (along-track progress), `cross_h`/`cross_h_signed` (cross-track error), `dist_to_pipe`,
+`rock_dist`/`rock_bearing`, etc.) that every other script in this project reads from.
+
+`test_rov_env_v20.py` is the standalone smoke test — launches the app, then imports the env
+module (the standard Isaac Lab import-order constraint: `isaaclab.*` submodules can't be
+imported before Kit's extension system is running, which is why every script here calls
+`AppLauncher` before any other project import).
+
+## The 11 methods
+
+| Method | Checkpoint / class | Trainer (if learned) |
+|---|---|---|
+| `ppo` | `rov_pipeline_policy_v20.pt` | `rov_pipeline_rl_v20.py` |
+| `td3` | `rov_pipeline_policy_td3_v20.pt` | `rov_pipeline_td3_v20.py` |
+| `ddpg` | `rov_pipeline_policy_ddpg_v20.pt` | `rov_pipeline_ddpg_v20.py` |
+| `sac` | `rov_pipeline_policy_sac_v20.pt` | `rov_pipeline_sac_v20.py` |
+| `trpo` | `rov_pipeline_policy_trpo_v20.pt` | `rov_pipeline_trpo_v20.py` |
+| `pid`, `smc`, `fuzzy`, `fl` | classes in `classical_controllers_v20.py` | — (no training) |
+| `mpc` | `MPCControllerV20` (wraps v19's unmodified `MPCController`) | — |
+| `anfis` | `ANFISController` (loads `rov_pipeline_v19/anfis_channels_v19.pt`) | — |
+
+All 5 RL trainers share `ppo_v20.py`'s `ActorCritic` network/checkpoint format (PPO and TRPO are
+both on-policy and use it directly; `off_policy_v20.py` is TD3/DDPG/SAC's shared replay-buffer
+infrastructure, a torch port of v19's `off_policy_common_v19.py`). Classical controllers are a
+torch port of v19's `classical_controller_common_v19.py` — same gains, same control laws, only
+the tensor backend and state-access paths changed (`env._project_to_centerline`/`env._robot.data`
+instead of v19's numpy `env.state`/`env.seg_dir`).
+
+**Training** (headless, 64 parallel envs):
+```bash
+./isaaclab.sh -p rov_pipeline_trpo_v20.py --total-timesteps 20000000 --headless
+```
+Each trainer's own `--help` lists its flags; commonly: `--total-timesteps`, `--n-envs`,
+`--seed`, plus a few algorithm-specific knobs (PPO: `--ent-coef`; TRPO: `--gamma`,
+`--action-penalty-coef`; TD3/DDPG/SAC: `--warmup-steps`, `--log-every-steps`). All of them
+accept `--resume-from <checkpoint.pt>` (PPO/TRPO) to continue training a saved policy. Progress
+is logged every update to `logs/<algo>/training_log.csv` (PPO logs to `logs/training_log.csv`
+directly) with columns `update, timesteps, mean_ep_return, mean_ep_len, success_rate,
+flip_rate, pipe_gap_violation_rate, policy_loss, value_loss, entropy, elapsed_s`.
+
+`run_fixed_offpolicy_chain.sh` is the batch-run harness used to train TD3/DDPG/SAC/TRPO back to
+back unattended: it restarts a run if no `step`/`update` log line appears within 240s of launch
+— the known transient "Kit cold-start stall" — up to 3 attempts per algorithm before giving up.
+
+**Deterministic evaluation** (why it exists: training-time rolling-average stats are noisy and
+can be fooled into keeping a late, regressed checkpoint over an earlier better one — see the
+dashboard/agent project's README for the specific historical incidents this caused):
+```bash
+./isaaclab.sh -p eval_policy_v20.py --checkpoint rov_pipeline_policy_trpo_v20.pt --headless
+# classical controllers: run_classical_controller_v20.py --method mpc  (no --checkpoint)
+```
+Runs N full deterministic (no-sampling) episodes in parallel, reports success/flip/gap-violation
+rates and standoff RMSE (`sqrt-mean-sq(dist_to_pipe - standoff_track_target)`, matching v19's
+`setpoint_rmse` training-log column).
+
+**Single-env GUI flight** (one episode, for visual inspection or screen recording):
+```bash
+./isaaclab.sh -p run_gui_flight_v20.py --method trpo --viz kit
+```
+Prints `Outcome: <success|flipped|pipe_gap_violation|other_collision|timed_out>` on episode end —
+`record_gui_run_v20.sh` greps for that exact string to know when to stop recording. Also streams
+live telemetry (position, depth, cross-track error, progress, speed, 8 thruster commands) over
+UDP for `rov_dashboard_v1` to visualize, if that dashboard happens to be running — it's a no-op
+if not, so this script works identically standalone.
+
+## Trajectory recording and plots
+
+```bash
+./isaaclab.sh -p record_trajectory_v20.py --method <any-of-11> --headless
+./isaaclab.sh -p plot_trajectories_v20.py          # reads logs/trajectories/<method>.npz
+./isaaclab.sh -p make_plots_v20.py                 # training curves + 11-method comparison chart
+```
+`record_trajectory_v20.py` is kept separate from `run_gui_flight_v20.py` (rather than importing
+it) because `run_gui_flight_v20.py` calls `AppLauncher` at import time, so it can't be imported
+as a library once Kit is already running inside another script.
+
+## Tuning sweeps
+
+`sweep_mpc_v20.sh` — the MPC parameter sweep harness (`mpc_sweep.log` is its recorded output):
+tries alternate CEM-sampling/horizon/weight configurations against the baseline over repeated
+trials. In the run on record, every retuned variant scored at or below the untouched baseline,
+so `classical_controllers_v20.py`'s `MPC_OVERRIDES` was deliberately left empty (`= {}`) —
+MPC runs with its original parameters.
+
+## Verifying physics before trusting the RL results
+
+`verify_rov_physics_isaaclab_v20.py` — step 2 of the migration plan, no RL: loads the exact same
+USD asset v19 used (`rov_in_water.usda`) into a minimal Isaac Lab env and checks the ROV
+drifts/thrusts/settles the same way v17–v19's live GUI force applicator did, before any training
+result from this version is trusted.
+
+## Files
+
+- `rov_pipeline_env_v20.py` — the shared environment (`RovPipelineEnv`, `SCENE`).
+- `ppo_v20.py` — shared `ActorCritic` network (PPO + TRPO), GAE.
+- `off_policy_v20.py`, `trpo_v20.py` — shared infra for TD3/DDPG/SAC and for TRPO respectively.
+- `rov_pipeline_{rl,td3,ddpg,sac,trpo}_v20.py` — the 5 trainers (`rl` = PPO).
+- `classical_controllers_v20.py` — PID/SMC/Fuzzy/FL/MPC/ANFIS, torch port of v19's controllers.
+- `eval_policy_v20.py` / `run_classical_controller_v20.py` — deterministic N-episode evaluation
+  for learned / classical methods respectively.
+- `run_gui_flight_v20.py` — single-env one-episode flight, any of the 11 methods, GUI or headless.
+- `record_trajectory_v20.py` / `plot_trajectories_v20.py` — trajectory capture and plotting.
+- `make_plots_v20.py` — training-curve and 11-method comparison plots.
+- `test_rov_env_v20.py` — environment smoke test.
+- `verify_rov_physics_isaaclab_v20.py` — pre-RL physics sanity check against v19's model.
+- `run_fixed_offpolicy_chain.sh` — unattended batch trainer with Kit-stall auto-restart.
+- `record_gui_run_v20.sh` — screen-recording wrapper around `run_gui_flight_v20.py`.
+- `sweep_mpc_v20.sh` — MPC parameter sweep harness.
+- `rov_pipeline_policy*_v20.pt` — saved checkpoints (one per RL algorithm).
+- `logs/` — `training_log.csv` per algorithm, `logs/trajectories/*.npz`.
+- `plots/` — output of `make_plots_v20.py`/`plot_trajectories_v20.py`.
+- `ROV_v20_User_Manual.docx` — longer-form manual (figures/screenshots) alongside this README.
+
+
+ 
