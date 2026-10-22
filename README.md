@@ -494,7 +494,7 @@ Video: <https://youtu.be/Gnxuk30e1Vw>
 
 ## Contact
 
-Cheng Siong Chin, Newcastle University Singapore
+Professor Cheng Siong Chin, Newcastle University Singapore
 
 Profile: <https://www.ncl.ac.uk/singapore/staff/profile/chengchin.html>
 
