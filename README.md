@@ -268,9 +268,9 @@ The overall objective is to establish a GPU-accelerated digital twin framework f
 * Intelligent subsea robotics
 
 
-=======================
+---
 
-# rov_pipeline_v20
+# A Shared Dynamics Architecture for RL Pipeline-Tracking Control of a Six-DOF ROV in NVIDIA Isaac Sim and Lab, with LLM-Driven Run Supervision (version 20)
 
 ROV pipeline-tracking simulation, training and evaluation on **Isaac Lab** (GPU-resident PhysX),
 the step-3+ result of `V18_ISAAC_LAB_PLAN.md`'s migration off v19's numpy/RK4 proxy env. Eleven
