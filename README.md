@@ -1,4 +1,5 @@
-Using Isaac Sim for the ROV Reinforcement Learning Digital Twin
+# Using Isaac Sim for the ROV Reinforcement Learning Digital Twin
+
 This project explores the integration of NVIDIA Isaac Sim with an existing ROV reinforcement learning (RL) digital twin. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications.
 The implementation is designed for GPU-accelerated simulation and training on NVIDIA hardware.
 > **Note:** This README provides an overview of the workflow and environment setup. Certain implementation details, model parameters, training configurations, simulation assets and integration interfaces have been intentionally omitted.
