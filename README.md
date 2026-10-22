@@ -1,8 +1,32 @@
-# Using Isaac Sim for the ROV Reinforcement Learning Digital Twin
-
-This project explores the integration of NVIDIA Isaac Sim with an existing ROV reinforcement learning (RL) digital twin. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications.
+Isaac Sim and Isaac Lab for an ROV Reinforcement Learning Digital Twin
+![arXiv](https://img.shields.io/badge/arXiv-2610.04949-b31b1b.svg)
+![YouTube](https://img.shields.io/badge/YouTube-Video-red?logo=youtube&logoColor=white)
+This project integrates NVIDIA Isaac Sim and Isaac Lab with an ROV reinforcement learning (RL) digital twin. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications, and adds an LLM-based AI agent that supervises training and evaluation runs.
 The implementation is designed for GPU-accelerated simulation and training on NVIDIA hardware.
 > **Note:** This README provides an overview of the workflow and environment setup. Certain implementation details, model parameters, training configurations, simulation assets and integration interfaces have been intentionally omitted.
+Resources
+Resource	Link
+Paper (arXiv:2610.04949)	A Unified Dynamics Framework for Reinforcement Learning and Classical Control of a Six-DOF Pipeline-Tracking ROV in NVIDIA Isaac Sim
+Video	Watch on YouTube
+Highlights from the paper
+One USD scene supplies the parameters of a BlueROV2-Heavy to two code paths: a NumPy implementation of Fossen's marine-craft equations and an Isaac Sim deployment, so that policies are trained and evaluated against the same physics.
+A controlled ablation on PPO and TRPO shows that including the Coriolis-centripetal term is stable and improves tracking. TRPO's standoff error is reduced by about 19 percent.
+Five RL algorithms (PPO, SAC, TD3, DDPG and TRPO) and six classical or model-based controllers (PID, sliding-mode, fuzzy logic, feedback linearization, MPC and ANFIS) are compared under identical guidance, environment and evaluation conditions.
+PPO, TRPO and feedback linearization reach a 100 percent success rate with strong tracking. Classical control remains a competitive, low-cost baseline.
+Contents
+System Overview
+Hardware and Software
+Isaac Sim Environment
+Initial Verification
+ROV Digital Twin
+Physics-Informed Learning
+Reinforcement Learning
+Pipeline-Tracking Application
+Using Isaac Lab
+AI Agent Integration
+Development Workflow
+Research Objective
+Citation
 ---
 1. System Overview
 The digital twin combines several components:
@@ -322,3 +346,18 @@ Pipeline tracking
 Robust control under uncertainty
 Sim-to-real transfer
 Intelligent subsea robotics
+---
+Citation
+If you use this work, please cite the paper:
+```bibtex
+@article{chin2026unified,
+  title   = {A Unified Dynamics Framework for Reinforcement Learning and Classical Control of a Six-DOF Pipeline-Tracking ROV in NVIDIA Isaac Sim},
+  author  = {Chin, Cheng Siong and Venkateshkumar, M. and Zhang, Jianhua},
+  year    = {2026},
+  eprint  = {2610.04949},
+  archivePrefix = {arXiv},
+  url     = {https://arxiv.org/html/2610.04949v1}
+}
+```
+Paper: https://arxiv.org/html/2610.04949v1  
+Video: https://youtu.be/Gnxuk30e1Vw
