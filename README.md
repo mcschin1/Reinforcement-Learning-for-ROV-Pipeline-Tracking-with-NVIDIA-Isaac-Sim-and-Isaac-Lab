@@ -1,35 +1,50 @@
-Isaac Sim and Isaac Lab for an ROV Reinforcement Learning Digital Twin
-![arXiv](https://img.shields.io/badge/arXiv-2610.04949-b31b1b.svg)
-![YouTube](https://img.shields.io/badge/YouTube-Video-red?logo=youtube&logoColor=white)
-This project integrates NVIDIA Isaac Sim and Isaac Lab with an ROV reinforcement learning (RL) digital twin. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications, and adds an LLM-based AI agent that supervises training and evaluation runs.
+# Isaac Sim and Isaac Lab for an ROV Reinforcement Learning Digital Twin
+
+[![arXiv](https://img.shields.io/badge/arXiv-2610.04949-b31b1b.svg)](https://arxiv.org/html/2610.04949v1)
+[![YouTube](https://img.shields.io/badge/YouTube-Video-red?logo=youtube&logoColor=white)](https://youtu.be/Gnxuk30e1Vw)
+
+This project integrates **NVIDIA Isaac Sim** and **Isaac Lab** with an **ROV reinforcement learning (RL) digital twin**. The framework combines marine vehicle dynamics, physics-informed learning and reinforcement learning to investigate autonomous ROV control and pipeline-tracking applications, and adds an LLM-based AI agent that supervises training and evaluation runs.
+
 The implementation is designed for GPU-accelerated simulation and training on NVIDIA hardware.
+
 > **Note:** This README provides an overview of the workflow and environment setup. Certain implementation details, model parameters, training configurations, simulation assets and integration interfaces have been intentionally omitted.
-Resources
-Resource	Link
-Paper (arXiv:2610.04949)	A Unified Dynamics Framework for Reinforcement Learning and Classical Control of a Six-DOF Pipeline-Tracking ROV in NVIDIA Isaac Sim
-Video	Watch on YouTube
-Highlights from the paper
-One USD scene supplies the parameters of a BlueROV2-Heavy to two code paths: a NumPy implementation of Fossen's marine-craft equations and an Isaac Sim deployment, so that policies are trained and evaluated against the same physics.
-A controlled ablation on PPO and TRPO shows that including the Coriolis-centripetal term is stable and improves tracking. TRPO's standoff error is reduced by about 19 percent.
-Five RL algorithms (PPO, SAC, TD3, DDPG and TRPO) and six classical or model-based controllers (PID, sliding-mode, fuzzy logic, feedback linearization, MPC and ANFIS) are compared under identical guidance, environment and evaluation conditions.
-PPO, TRPO and feedback linearization reach a 100 percent success rate with strong tracking. Classical control remains a competitive, low-cost baseline.
-Contents
-System Overview
-Hardware and Software
-Isaac Sim Environment
-Initial Verification
-ROV Digital Twin
-Physics-Informed Learning
-Reinforcement Learning
-Pipeline-Tracking Application
-Using Isaac Lab
-AI Agent Integration
-Development Workflow
-Research Objective
-Citation
+
+## Resources
+
+| Resource | Link |
+| --- | --- |
+| Paper (arXiv:2610.04949) | [A Unified Dynamics Framework for Reinforcement Learning and Classical Control of a Six-DOF Pipeline-Tracking ROV in NVIDIA Isaac Sim](https://arxiv.org/html/2610.04949v1) |
+| Video | [Watch on YouTube](https://youtu.be/Gnxuk30e1Vw) |
+
+## Highlights from the paper
+
+* One USD scene supplies the parameters of a BlueROV2-Heavy to two code paths: a NumPy implementation of Fossen's marine-craft equations and an Isaac Sim deployment, so that policies are trained and evaluated against the same physics.
+* A controlled ablation on PPO and TRPO shows that including the Coriolis-centripetal term is stable and improves tracking. TRPO's standoff error is reduced by about 19 percent.
+* Five RL algorithms (PPO, SAC, TD3, DDPG and TRPO) and six classical or model-based controllers (PID, sliding-mode, fuzzy logic, feedback linearization, MPC and ANFIS) are compared under identical guidance, environment and evaluation conditions.
+* PPO, TRPO and feedback linearization reach a 100 percent success rate with strong tracking. Classical control remains a competitive, low-cost baseline.
+
+## Contents
+
+1. [System Overview](#1-system-overview)
+2. [Hardware and Software](#2-hardware-and-software)
+3. [Isaac Sim Environment](#3-isaac-sim-environment)
+4. [Initial Verification](#4-initial-verification)
+5. [ROV Digital Twin](#5-rov-digital-twin)
+6. [Physics-Informed Learning](#6-physics-informed-learning)
+7. [Reinforcement Learning](#7-reinforcement-learning)
+8. [Pipeline-Tracking Application](#8-pipeline-tracking-application)
+9. [Using Isaac Lab](#9-using-isaac-lab)
+10. [AI Agent Integration](#10-ai-agent-integration)
+11. [Development Workflow](#11-development-workflow)
+12. [Research Objective](#12-research-objective)
+- [Citation](#citation)
+
 ---
-1. System Overview
+
+## 1. System Overview
+
 The digital twin combines several components:
+
 ```text
         ROV Hydrodynamic Model
                  │
@@ -51,45 +66,67 @@ The digital twin combines several components:
                  ▼
        Autonomous ROV Control
 ```
+
 Isaac Sim provides the simulation environment, while the existing marine dynamics and learning components provide the basis for ROV behaviour and control.
+
 Isaac Lab provides the reinforcement learning layer on top of Isaac Sim (Section 9), and an AI agent supervises training and evaluation runs (Section 10).
+
 ---
-2. Hardware and Software
+
+## 2. Hardware and Software
+
 The development workflow uses:
-NVIDIA GPU computing platform
-ARM64/Grace-based computing environment
-NVIDIA Isaac Sim
-NVIDIA Isaac Lab (parallel-environment reinforcement learning)
-Docker-based deployment
-Python
-PPO reinforcement learning
-LLM-based supervisor agent (locally hosted or API-hosted model)
-6-DOF marine vehicle dynamics
-Physics-informed neural networks (PINNs)
-USD-based simulation assets
+
+* NVIDIA GPU computing platform
+* ARM64/Grace-based computing environment
+* NVIDIA Isaac Sim
+* NVIDIA Isaac Lab (parallel-environment reinforcement learning)
+* Docker-based deployment
+* Python
+* PPO reinforcement learning
+* LLM-based supervisor agent (locally hosted or API-hosted model)
+* 6-DOF marine vehicle dynamics
+* Physics-informed neural networks (PINNs)
+* USD-based simulation assets
+
 Specific hardware configurations, software versions and dependency combinations are intentionally not disclosed in this public README.
+
 ---
-3. Isaac Sim Environment
+
+## 3. Isaac Sim Environment
+
 Isaac Sim is deployed using an NVIDIA-supported container appropriate for the target GPU architecture.
+
 A generic container workflow is:
+
 ```bash
 docker pull nvcr.io/nvidia/isaac-sim:<VERSION>-<ARCH>
 ```
+
 The container is then launched with GPU access and a project workspace:
+
 ```bash
 docker run --gpus all -it --rm \
     -v <PROJECT_DIRECTORY>:/workspace \
     nvcr.io/nvidia/isaac-sim:<VERSION>-<ARCH>
 ```
+
 The exact image version, architecture tag and project directory used in the implementation are intentionally omitted.
+
 ---
-4. Initial Verification
+
+## 4. Initial Verification
+
 Before integrating the ROV digital twin, Isaac Sim should be verified independently.
+
 For a headless environment, the corresponding Isaac Sim headless launcher can be used:
+
 ```bash
 ./isaac-sim.headless.sh
 ```
+
 The initial verification should confirm:
+
 ```text
 GPU
  │
@@ -105,11 +142,17 @@ Headless Rendering
  ▼
 Simulation
 ```
+
 Only after this stage has been successfully completed should the ROV environment be introduced.
+
 ---
-5. ROV Digital Twin
+
+## 5. ROV Digital Twin
+
 The ROV digital twin incorporates a six-degree-of-freedom marine vehicle representation.
+
 The general state consists of position, orientation, linear velocity and angular velocity:
+
 ```text
 ROV State
    │
@@ -118,12 +161,19 @@ ROV State
    ├── Linear Velocity
    └── Angular Velocity
 ```
+
 The underlying hydrodynamic formulation follows established marine vehicle modelling approaches.
+
 Specific hydrodynamic coefficients, vehicle dimensions, mass properties, damping parameters and other calibrated model parameters are not included.
+
 ---
-6. Physics-Informed Learning
+
+## 6. Physics-Informed Learning
+
 A physics-informed neural network is incorporated to represent selected aspects of the ROV's uncertain or nonlinear behaviour.
+
 The general concept is:
+
 ```text
 Simulation / Experimental Data
              │
@@ -136,17 +186,25 @@ Simulation / Experimental Data
              ▼
      Physics-Informed Model
 ```
+
 The PINN can support applications such as:
-Hydrodynamic parameter estimation
-Model correction
-Uncertainty representation
-Disturbance modelling
-Adaptive simulation
+
+* Hydrodynamic parameter estimation
+* Model correction
+* Uncertainty representation
+* Disturbance modelling
+* Adaptive simulation
+
 The network architecture, training parameters, loss-function formulation and calibrated parameters are implementation-specific and are therefore omitted.
+
 ---
-7. Reinforcement Learning
+
+## 7. Reinforcement Learning
+
 The RL component uses PPO to learn an ROV control policy.
+
 The general training loop is:
+
 ```text
 ROV Observation
        │
@@ -167,12 +225,19 @@ ROV Observation
        │
        └──────────► PPO Update
 ```
+
 The policy is trained to achieve the required ROV control objective while maintaining stable and physically meaningful behaviour.
+
 Exact observation definitions, action mappings, network architecture, PPO hyperparameters and reward coefficients are not disclosed.
+
 ---
-8. Pipeline-Tracking Application
+
+## 8. Pipeline-Tracking Application
+
 One application considered by the digital twin is autonomous underwater pipeline tracking.
+
 The general objective is:
+
 ```text
 Reference Pipeline
         │
@@ -188,11 +253,17 @@ Tracking Error
         ▼
 Tracking Performance
 ```
+
 The simulation can incorporate environmental disturbances and sensor uncertainty to evaluate the robustness of the learned controller.
+
 The precise pipeline geometry, sensor configuration, tracking thresholds and reward formulation are implementation-specific.
+
 ---
-9. Using Isaac Lab
+
+## 9. Using Isaac Lab
+
 Isaac Lab is NVIDIA's open-source robot-learning framework, built on top of Isaac Sim. Isaac Sim supplies the physics, the USD scene and the rendering. Isaac Lab adds the reinforcement learning layer: environment definitions, many copies of the environment simulated in parallel on the GPU, and ready-made training and evaluation scripts. In this project it is used to train and evaluate the pipeline-tracking controller at scale.
+
 ```text
 Isaac Sim (physics, USD scene, rendering)
         │
@@ -208,8 +279,11 @@ Policy Checkpoint
         ▼
 Evaluation / Playback in Isaac Sim
 ```
-9.1 Setup
+
+### 9.1 Setup
+
 Isaac Sim should already be verified (Section 4). Isaac Lab is then installed against that Isaac Sim installation:
+
 ```bash
 git clone https://github.com/isaac-sim/IsaacLab.git
 cd IsaacLab
@@ -220,43 +294,68 @@ ln -sfn <ISAACSIM_PATH> _isaac_sim
 # install Isaac Lab and its extensions
 ./isaaclab.sh --install
 ```
+
 The Isaac Sim build must match the machine architecture (for example, an aarch64 build on an ARM64/Grace system).
-9.2 Check the installation
+
+### 9.2 Check the installation
+
 List the registered environments to confirm that Isaac Lab starts correctly:
+
 ```bash
 ./isaaclab.sh -p scripts/environments/list_envs.py
 ```
+
 Always run Isaac Lab scripts through `./isaaclab.sh -p`, so that they use the Python environment that Isaac Sim provides.
-9.3 Train a policy
+
+### 9.3 Train a policy
+
 ```bash
 ./isaaclab.sh -p scripts/reinforcement_learning/<FRAMEWORK>/train.py \
     --task <TASK_NAME> --headless --num_envs <N>
 ```
-`--headless` turns off the viewport, which makes training much faster.
-`--num_envs` sets how many environments are simulated in parallel on the GPU.
-Training progress and checkpoints are written to a logs folder for each run.
-9.4 Evaluate a checkpoint
+
+* `--headless` turns off the viewport, which makes training much faster.
+* `--num_envs` sets how many environments are simulated in parallel on the GPU.
+* Training progress and checkpoints are written to a logs folder for each run.
+
+### 9.4 Evaluate a checkpoint
+
 ```bash
 ./isaaclab.sh -p scripts/reinforcement_learning/<FRAMEWORK>/play.py \
     --task <TASK_NAME> --checkpoint <CHECKPOINT_PATH>
 ```
+
 Evaluation replays a trained policy without learning. Run it headless to collect metrics, or with the viewport to watch the ROV follow the pipeline.
+
 Script locations and argument names change between Isaac Lab versions, so check the documentation for the installed version.
-9.5 Running from the dashboard
+
+### 9.5 Running from the dashboard
+
 The project dashboard exposes training and evaluation as Start, Stop and Restart controls, with selectors for the algorithm and checkpoint. The same workflow can therefore be run without typing commands, and the AI agent in Section 10 uses the same controls.
+
 Task names, environment configurations, parallel-environment counts and training settings are implementation-specific and are omitted.
+
 ---
-10. AI Agent Integration
-10.1 Purpose
+
+## 10. AI Agent Integration
+
+### 10.1 Purpose
+
 Training an RL controller involves many repeated manual decisions: stopping a run that has stopped improving, restarting from a better checkpoint, or retuning a parameter. The AI agent automates these decisions. It is a large language model (LLM) that watches training and evaluation runs through the dashboard and decides what to do next.
+
 Its purposes are to:
-Detect problems early, such as a reward plateau, divergence, NaN values, a crashed process or GPU memory exhaustion.
-Save GPU time by stopping unproductive runs and restarting from the best checkpoint.
-Make decisions consistent and traceable, with the evidence, the action and the outcome recorded for each one.
-Free the researcher from watching long runs, and ask for help when the situation is unclear.
+
+* Detect problems early, such as a reward plateau, divergence, NaN values, a crashed process or GPU memory exhaustion.
+* Save GPU time by stopping unproductive runs and restarting from the best checkpoint.
+* Make decisions consistent and traceable, with the evidence, the action and the outcome recorded for each one.
+* Free the researcher from watching long runs, and ask for help when the situation is unclear.
+
 A second, planned role is a mission agent that accepts a plain-language mission (for example, "inspect the full pipeline and report any rock close to it") and calls a fixed set of predefined skills.
-10.2 Where the agent sits
+
+### 10.2 Where the agent sits
+
 The agent does not control the ROV directly. Two loops are kept strictly separate:
+
 ```text
 FAST LOOP (physics rate, no LLM)
    RL Policy ──► Thruster Commands ──► Isaac Sim ──► New State
@@ -278,32 +377,48 @@ SLOW LOOP (every few seconds or on events)
               ▼
    Dashboard controls ──► Stop / Restart / Switch Checkpoint / Retune
 ```
+
 The LLM is far too slow for thruster control, so the RL policy keeps real-time control. The agent only makes slower, high-level decisions about the runs.
-10.3 What the agent can and cannot do
+
+### 10.3 What the agent can and cannot do
+
 The agent can choose from a fixed, typed set of actions:
-Continue the current run.
-Stop a run, with a stated reason.
-Restart a run from a checkpoint, with optional configuration changes.
-Switch to another checkpoint, chosen by evaluation metrics rather than simply the latest.
-Retune a parameter, but only parameters on an allowlist and only within set minimum and maximum values.
-Run an evaluation of a checkpoint.
-Escalate a question to the researcher.
+
+* Continue the current run.
+* Stop a run, with a stated reason.
+* Restart a run from a checkpoint, with optional configuration changes.
+* Switch to another checkpoint, chosen by evaluation metrics rather than simply the latest.
+* Retune a parameter, but only parameters on an allowlist and only within set minimum and maximum values.
+* Run an evaluation of a checkpoint.
+* Escalate a question to the researcher.
+
 The agent cannot control thrusters, delete checkpoints, change parameters outside the allowed bounds, or run any command that is not on the fixed allowlist.
-10.4 Safety
-Every proposed action is checked by deterministic code, not by the LLM, against the allowlist, the parameter bounds and a locked file of hard limits that the agent cannot change.
-Limits apply to restarts per hour, total retunes, run time and GPU budget, with a cooldown after each intervention so that its effect can be measured.
-The agent does not repeat an intervention that has already failed, and escalates to the researcher after repeated failures.
-If the LLM is unavailable or returns an invalid action, nothing is done and the event is logged. Stopping a healthy run by mistake is considered worse than waiting.
-The agent runs in one of three modes: observe-only (it only logs what it would do), approve-each (the researcher approves every action) or autonomous. The default is observe-only.
-Every decision is written to a log with the evidence used, the action taken and the result.
-10.5 Settings
+
+### 10.4 Safety
+
+* Every proposed action is checked by deterministic code, not by the LLM, against the allowlist, the parameter bounds and a locked file of hard limits that the agent cannot change.
+* Limits apply to restarts per hour, total retunes, run time and GPU budget, with a cooldown after each intervention so that its effect can be measured.
+* The agent does not repeat an intervention that has already failed, and escalates to the researcher after repeated failures.
+* If the LLM is unavailable or returns an invalid action, nothing is done and the event is logged. Stopping a healthy run by mistake is considered worse than waiting.
+* The agent runs in one of three modes: observe-only (it only logs what it would do), approve-each (the researcher approves every action) or autonomous. The default is observe-only.
+* Every decision is written to a log with the evidence used, the action taken and the result.
+
+### 10.5 Settings
+
 A settings page in the dashboard lets the researcher change the agent's behaviour without editing files: the mode, how often it checks, what counts as a plateau or collapse, which actions are permitted, the allowed range of each tunable parameter, the limits, the model used (local or API-hosted) and the checkpoint rules. Conservative, balanced and aggressive presets are provided, every change is versioned and can be undone, and a dry run shows what the agent would have done with new settings before they are applied.
-10.6 Status and evaluation
+
+### 10.6 Status and evaluation
+
 The agent is under development. It is first run in observe-only mode and its decisions are compared with the manual interventions made in earlier runs. It is also tested with injected faults (a reward plateau, NaN loss, a crashed process, GPU memory exhaustion and a checkpoint that evaluates worse than an older one). The measures of interest are the rate of correct interventions, the number of wrongly stopped runs (the target is zero), the time taken to detect a problem and the GPU hours saved compared with manual supervision.
+
 Prompts, thresholds, limits, model choices and the decision logic are implementation-specific and are omitted.
+
 ---
-11. Development Workflow
+
+## 11. Development Workflow
+
 The recommended development sequence is:
+
 ```text
 1. Configure GPU environment
           ↓
@@ -335,20 +450,28 @@ The recommended development sequence is:
           ↓
 15. Review its decisions, then move to approve-each
 ```
+
 ---
-12. Research Objective
+
+## 12. Research Objective
+
 The overall objective is to establish a GPU-accelerated digital twin framework for investigating:
-Autonomous ROV control
-Reinforcement learning
-LLM-based supervision of training and evaluation
-Physics-informed learning
-Pipeline tracking
-Robust control under uncertainty
-Sim-to-real transfer
-Intelligent subsea robotics
+
+* Autonomous ROV control
+* Reinforcement learning
+* LLM-based supervision of training and evaluation
+* Physics-informed learning
+* Pipeline tracking
+* Robust control under uncertainty
+* Sim-to-real transfer
+* Intelligent subsea robotics
+
 ---
-Citation
+
+## Citation
+
 If you use this work, please cite the paper:
+
 ```bibtex
 @article{chin2026unified,
   title   = {A Unified Dynamics Framework for Reinforcement Learning and Classical Control of a Six-DOF Pipeline-Tracking ROV in NVIDIA Isaac Sim},
@@ -359,5 +482,6 @@ If you use this work, please cite the paper:
   url     = {https://arxiv.org/html/2610.04949v1}
 }
 ```
-Paper: https://arxiv.org/html/2610.04949v1  
-Video: https://youtu.be/Gnxuk30e1Vw
+
+Paper: <https://arxiv.org/html/2610.04949v1>  
+Video: <https://youtu.be/Gnxuk30e1Vw>
